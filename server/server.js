@@ -14,15 +14,24 @@ dotenv.config({ path: envPath });
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// CORS configuration explicitly scoped to local development environments
+// CORS configuration allowing local development and deployed Vercel frontend origins
 const allowedOriginPatterns = [
   /^http:\/\/localhost(:\d+)?$/,
   /^http:\/\/127\.0\.0\.1(:\d+)?$/,
+  /^https:\/\/([a-zA-Z0-9_-]+\.)*vercel\.app$/,
 ];
+
+// Support optional custom production frontend URL from environment variable
+if (process.env.FRONTEND_URL) {
+  try {
+    const customOrigin = new URL(process.env.FRONTEND_URL).origin;
+    allowedOriginPatterns.push(new RegExp(`^${customOrigin.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`));
+  } catch {}
+}
 
 app.use(cors({
   origin: (origin, callback) => {
-    // Allow non-browser requests (e.g. server-to-server, curl, test scripts)
+    // Allow non-browser requests (e.g. server-to-server, curl, health checks)
     if (!origin) return callback(null, true);
     if (allowedOriginPatterns.some((pattern) => pattern.test(origin))) {
       return callback(null, true);

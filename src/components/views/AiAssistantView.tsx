@@ -262,16 +262,7 @@ const MarkdownMessage: React.FC<{ content: string }> = ({ content }) => {
   );
 };
 
-const BACKEND_BASE = 'http://localhost:3001';
-
-// Direct backend fetch with relative proxy fallback
-async function fetchBackend(endpoint: string, options?: RequestInit): Promise<Response> {
-  try {
-    return await fetch(`${BACKEND_BASE}${endpoint}`, options);
-  } catch {
-    return await fetch(endpoint, options);
-  }
-}
+const API_URL = (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/+$/, '') || 'http://localhost:3001';
 
 export const AiAssistantView: React.FC = () => {
   const [promptText, setPromptText] = useState('');
@@ -295,7 +286,7 @@ export const AiAssistantView: React.FC = () => {
 
   // Check backend health on mount
   useEffect(() => {
-    fetchBackend('/api/health')
+    fetch(`${API_URL}/api/health`)
       .then((res) => res.json())
       .then((data) => {
         setBackendConfigured(Boolean(data.groqConfigured));
@@ -327,7 +318,7 @@ export const AiAssistantView: React.FC = () => {
     try {
       const liveContext = getLiveApplicationContext();
 
-      const response = await fetchBackend('/api/chat', {
+      const response = await fetch(`${API_URL}/api/chat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
