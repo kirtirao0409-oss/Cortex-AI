@@ -49,6 +49,7 @@ export const ProjectsView: React.FC = () => {
   const saveProjectsToStorage = (updated: ProjectItem[]) => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+      window.dispatchEvent(new CustomEvent('cortex_data_change', { detail: { key: STORAGE_KEY } }));
     } catch (e) {
       console.error('Failed to save projects to localStorage', e);
     }

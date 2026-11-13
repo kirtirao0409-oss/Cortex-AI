@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  Plus, 
   Building2, 
   Search, 
   Pencil, 
@@ -124,11 +123,12 @@ export const CrmView: React.FC = () => {
     return INITIAL_CRM_OPPORTUNITIES;
   });
 
-  // Save to localStorage whenever records change
+  // Save to localStorage whenever records change and notify other components
   useEffect(() => {
     try {
       if (typeof window !== 'undefined' && window.localStorage) {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(opportunities));
+        window.dispatchEvent(new CustomEvent('cortex_data_change', { detail: { key: STORAGE_KEY } }));
       }
     } catch (e) {
       console.error('Failed to save CRM opportunities:', e);
@@ -314,10 +314,9 @@ export const CrmView: React.FC = () => {
               setEditingOpportunity(null);
               setIsModalOpen(true);
             }}
-            className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-white bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 rounded-xl shadow-lg shadow-purple-900/40 border border-purple-400/30 transition-all cursor-pointer"
+            className="flex items-center justify-center px-4 py-2 text-xs font-semibold text-white bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 rounded-xl shadow-lg shadow-purple-900/40 border border-purple-400/30 transition-all cursor-pointer text-center"
           >
-            <Plus className="w-4 h-4" />
-            <span>+ New Opportunity</span>
+            <span>New Opportunity</span>
           </button>
         </div>
       </div>
@@ -540,7 +539,7 @@ export const CrmView: React.FC = () => {
                       <p className="text-xs text-zinc-500 mt-1">
                         {searchQuery
                           ? `No records match "${searchQuery}". Try another keyword or clear the search.`
-                          : 'No opportunities in this stage. Click "+ New Opportunity" to create one.'}
+                          : 'No opportunities in this stage. Click "New Opportunity" to create one.'}
                       </p>
                       {searchQuery && (
                         <button

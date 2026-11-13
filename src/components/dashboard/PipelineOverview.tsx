@@ -37,8 +37,14 @@ const CustomPipelineTooltip: React.FC<PipelineTooltipProps> = ({ active, payload
 };
 
 export const PipelineOverview: React.FC<PipelineOverviewProps> = ({ data }) => {
-  const totalValue = data.reduce((acc, curr) => acc + curr.value, 0);
-  const totalDeals = data.reduce((acc, curr) => acc + curr.count, 0);
+  const totalValue = data.reduce((acc, curr) => acc + (Number(curr.value) || 0), 0);
+  const totalDeals = data.reduce((acc, curr) => acc + (Number(curr.count) || 0), 0);
+
+  const formattedTotal = totalValue >= 1000000 
+    ? `$${(totalValue / 1000000).toFixed(2)}M` 
+    : totalValue >= 1000 
+      ? `$${(totalValue / 1000).toFixed(0)}k` 
+      : `$${totalValue}`;
 
   return (
     <div className="relative overflow-hidden rounded-2xl bg-gradient-to-b from-[#121222]/90 to-[#0e0e1a]/80 backdrop-blur-xl border border-purple-500/15 p-5 lg:p-6 shadow-xl flex flex-col justify-between">
@@ -53,11 +59,11 @@ export const PipelineOverview: React.FC<PipelineOverviewProps> = ({ data }) => {
               CRM Pipeline Funnel
             </h3>
             <span className="px-2 py-0.5 text-[10px] font-semibold text-emerald-300 bg-emerald-950/50 rounded-full border border-emerald-500/30">
-              Healthy
+              {totalDeals > 0 ? 'Live Pipeline' : 'Empty'}
             </span>
           </div>
           <span className="text-xs text-purple-300 font-mono font-semibold">
-            ${(totalValue / 1000000).toFixed(2)}M Active
+            {formattedTotal} Active
           </span>
         </div>
         <p className="text-xs text-zinc-400 mb-4">
@@ -67,7 +73,7 @@ export const PipelineOverview: React.FC<PipelineOverviewProps> = ({ data }) => {
         {/* Horizontal Mini Funnel Bars */}
         <div className="space-y-2.5 mb-5">
           {data.map((stage) => {
-            const percentOfTotal = ((stage.value / totalValue) * 100).toFixed(0);
+            const percentOfTotal = totalValue > 0 ? ((stage.value / totalValue) * 100).toFixed(0) : '0';
             return (
               <div key={stage.stage} className="group">
                 <div className="flex items-center justify-between text-xs mb-1">
@@ -75,7 +81,7 @@ export const PipelineOverview: React.FC<PipelineOverviewProps> = ({ data }) => {
                     {stage.stage}
                   </span>
                   <div className="flex items-center gap-2 font-mono">
-                    <span className="text-zinc-400 text-[11px]">{stage.count} deals</span>
+                    <span className="text-zinc-400 text-[11px]">{stage.count} {stage.count === 1 ? 'deal' : 'deals'}</span>
                     <span className="text-white font-semibold">{stage.formattedValue}</span>
                   </div>
                 </div>
@@ -85,9 +91,9 @@ export const PipelineOverview: React.FC<PipelineOverviewProps> = ({ data }) => {
                   <div
                     className="h-full rounded-full transition-all duration-500 group-hover:brightness-125"
                     style={{
-                      width: `${Math.max(Number(percentOfTotal), 6)}%`,
+                      width: `${totalValue > 0 ? Math.max(Number(percentOfTotal), stage.count > 0 ? 8 : 0) : 0}%`,
                       backgroundColor: stage.color,
-                      boxShadow: `0 0 8px ${stage.color}60`,
+                      boxShadow: stage.count > 0 ? `0 0 8px ${stage.color}60` : 'none',
                     }}
                   />
                 </div>
@@ -101,8 +107,8 @@ export const PipelineOverview: React.FC<PipelineOverviewProps> = ({ data }) => {
       <div className="mt-2 pt-4 border-t border-purple-500/10">
         <div className="flex items-center justify-between text-[11px] text-zinc-400 mb-2">
           <span>Stage Deal Volume</span>
-          <span className="text-purple-300 font-medium flex items-center gap-1">
-            <TrendingUp className="w-3 h-3 text-purple-400" /> +18% Velocity
+          <span className="text-purple-300 font-medium flex items-center gap-1 font-mono">
+            <TrendingUp className="w-3 h-3 text-purple-400" /> {totalDeals} Opportunities
           </span>
         </div>
         <div className="h-28 w-full">

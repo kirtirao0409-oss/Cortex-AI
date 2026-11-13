@@ -58,6 +58,7 @@ export const HrmsView: React.FC = () => {
     setRequisitions(updated);
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+      window.dispatchEvent(new CustomEvent('cortex_data_change', { detail: { key: STORAGE_KEY } }));
     } catch (e) {
       console.error('Failed to save to localStorage', e);
     }
@@ -73,6 +74,7 @@ export const HrmsView: React.FC = () => {
     setRequisitions(updated);
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+      window.dispatchEvent(new CustomEvent('cortex_data_change', { detail: { key: STORAGE_KEY } }));
     } catch (e) {
       console.error('Failed to update localStorage', e);
     }
