@@ -15,9 +15,11 @@ import {
   INITIAL_CRM_OPPORTUNITIES, 
   DEMO_HRMS_ROLES, 
   DEMO_AUTOMATION_SUMMARY,
-  DEMO_PROJECT_LIST 
+  DEMO_PROJECT_LIST,
+  INITIAL_NOTIFICATIONS 
 } from '../../data/mockData';
-import type { NavigationTab, CrmOpportunity } from '../../types';
+import { NotificationPanel } from './NotificationPanel';
+import type { NavigationTab, CrmOpportunity, CortexNotification } from '../../types';
 
 interface HeaderProps {
   activeTab: NavigationTab;
@@ -78,27 +80,97 @@ export const Header: React.FC<HeaderProps> = ({
   const searchInputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Global keyboard shortcut: Cmd+K or Ctrl+K to focus search input
+  // Notifications State & LocalStorage Persistence
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const notificationContainerRef = useRef<HTMLDivElement>(null);
+  const NOTIFICATIONS_STORAGE_KEY = 'cortex_notifications';
+
+  const [notifications, setNotifications] = useState<CortexNotification[]>(() => {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        const saved = localStorage.getItem(NOTIFICATIONS_STORAGE_KEY);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            return parsed;
+          }
+        }
+      }
+    } catch {
+      // fallback to default
+    }
+    return INITIAL_NOTIFICATIONS;
+  });
+
+  useEffect(() => {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        localStorage.setItem(NOTIFICATIONS_STORAGE_KEY, JSON.stringify(notifications));
+      }
+    } catch {
+      // storage quota / unavailable
+    }
+  }, [notifications]);
+
+  const unreadCount = useMemo(() => {
+    return notifications.filter((n) => !n.read).length;
+  }, [notifications]);
+
+  const handleMarkAsRead = (id: string) => {
+    setNotifications((prev) =>
+      prev.map((n) => (n.id === id ? { ...n, read: !n.read } : n))
+    );
+  };
+
+  const handleMarkAllAsRead = () => {
+    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+  };
+
+  const handleClearAll = () => {
+    setNotifications([]);
+  };
+
+  const handleResetNotifications = () => {
+    setNotifications(INITIAL_NOTIFICATIONS);
+  };
+
+  const handleSelectNotification = (tab: NavigationTab, id: string) => {
+    setNotifications((prev) =>
+      prev.map((n) => (n.id === id ? { ...n, read: true } : n))
+    );
+    onSelectTab(tab);
+    setIsNotificationsOpen(false);
+  };
+
+  // Global keyboard shortcut: Cmd+K or Ctrl+K to focus search input; Escape to dismiss modals
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault();
         searchInputRef.current?.focus();
         setIsDropdownOpen(true);
-      } else if (e.key === 'Escape' && isDropdownOpen) {
-        setIsDropdownOpen(false);
-        searchInputRef.current?.blur();
+      } else if (e.key === 'Escape') {
+        if (isDropdownOpen) {
+          setIsDropdownOpen(false);
+          searchInputRef.current?.blur();
+        }
+        if (isNotificationsOpen) {
+          setIsNotificationsOpen(false);
+        }
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isDropdownOpen]);
+  }, [isDropdownOpen, isNotificationsOpen]);
 
-  // Click outside listener to dismiss dropdown
+  // Click outside listener to dismiss dropdowns
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
         setIsDropdownOpen(false);
+      }
+      if (notificationContainerRef.current && !notificationContainerRef.current.contains(e.target as Node)) {
+        setIsNotificationsOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -213,13 +285,9 @@ export const Header: React.FC<HeaderProps> = ({
         </button>
 
         <div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center">
             <span className="text-xs font-semibold text-purple-400/90 tracking-wide uppercase font-mono">
               CORTEX // {activeTab.toUpperCase()}
-            </span>
-            <span className="hidden sm:inline-block w-1.5 h-1.5 rounded-full bg-purple-500" />
-            <span className="hidden sm:inline-block text-xs text-zinc-400 font-normal">
-              Autonomous Hub
             </span>
           </div>
           <h1 className="text-lg lg:text-xl font-bold tracking-tight text-white flex items-center gap-2">
@@ -466,13 +534,41 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
 
         {/* Notifications */}
-        <button
-          title="Notifications"
-          className="relative p-2 text-zinc-400 hover:text-white rounded-xl hover:bg-purple-500/10 border border-transparent hover:border-purple-500/20 transition-all cursor-pointer"
-        >
-          <Bell className="w-4 h-4" />
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-purple-500 ring-2 ring-[#09090f]" />
-        </button>
+        <div ref={notificationContainerRef} className="relative">
+          <button
+            type="button"
+            onClick={() => setIsNotificationsOpen((prev) => !prev)}
+            title="Notifications"
+            aria-label="Notifications"
+            aria-expanded={isNotificationsOpen}
+            className={`relative p-2 rounded-xl border transition-all cursor-pointer ${
+              isNotificationsOpen
+                ? 'text-white bg-purple-600/20 border-purple-500/40'
+                : 'text-zinc-400 hover:text-white hover:bg-purple-500/10 border-transparent hover:border-purple-500/20'
+            }`}
+          >
+            <Bell className="w-4 h-4" />
+            {unreadCount > 0 && (
+              <span className="absolute -top-1 -right-1 flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] font-bold text-white bg-gradient-to-r from-purple-500 to-indigo-500 rounded-full border-2 border-[#09090f] shadow-md shadow-purple-500/40">
+                {unreadCount > 9 ? '9+' : unreadCount}
+              </span>
+            )}
+          </button>
+
+          <AnimatePresence>
+            {isNotificationsOpen && (
+              <NotificationPanel
+                notifications={notifications}
+                onClose={() => setIsNotificationsOpen(false)}
+                onMarkAsRead={handleMarkAsRead}
+                onMarkAllAsRead={handleMarkAllAsRead}
+                onClearAll={handleClearAll}
+                onResetNotifications={handleResetNotifications}
+                onSelectNotification={handleSelectNotification}
+              />
+            )}
+          </AnimatePresence>
+        </div>
 
         {/* AI Copilot Trigger Button */}
         <button

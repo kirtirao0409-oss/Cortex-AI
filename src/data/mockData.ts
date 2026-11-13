@@ -12,7 +12,8 @@ import type {
   AutomationTask,
   CrmOpportunity,
   HrmsRequisition,
-  ProjectItem 
+  ProjectItem,
+  CortexNotification 
 } from '../types';
 
 /**
@@ -366,5 +367,53 @@ export const DEMO_PROJECT_LIST: ProjectItem[] = [
     startDate: '2026-11-01',
     priority: 'Medium',
     createdAt: '2026-11-01'
+  },
+];
+
+export const INITIAL_NOTIFICATIONS: CortexNotification[] = [
+  {
+    id: 'notif-1',
+    title: 'New CRM Opportunity Added',
+    message: 'Apex Logistics Global ($85,000) was qualified and registered into the active sales pipeline.',
+    timestamp: '10 min ago',
+    module: 'CRM',
+    targetTab: 'crm',
+    read: false,
+  },
+  {
+    id: 'notif-2',
+    title: 'HRMS Candidate Pipeline Updated',
+    message: '14 candidate profiles screened for Staff AI Platform Engineer with 3 top candidates advancing.',
+    timestamp: '25 min ago',
+    module: 'HRMS',
+    targetTab: 'hrms',
+    read: false,
+  },
+  {
+    id: 'notif-3',
+    title: 'Project Status Changed',
+    message: 'Autonomous ETL Pipeline advanced from Planning to In Progress (55% milestone achieved).',
+    timestamp: '1 hr ago',
+    module: 'PROJECTS',
+    targetTab: 'projects',
+    read: false,
+  },
+  {
+    id: 'notif-4',
+    title: 'Analytics Report Updated',
+    message: 'Executive platform metrics and monthly revenue conversion telemetry were recalculated.',
+    timestamp: '2 hrs ago',
+    module: 'ANALYTICS',
+    targetTab: 'analytics',
+    read: false,
+  },
+  {
+    id: 'notif-5',
+    title: 'AI Workflow Completed',
+    message: 'Autonomous lead enrichment & executive summary generated successfully for Tier-1 accounts.',
+    timestamp: '3 hrs ago',
+    module: 'AI_AGENT',
+    targetTab: 'ai-assistant',
+    read: true,
   },
 ];

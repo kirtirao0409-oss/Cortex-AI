@@ -115,3 +115,15 @@ export interface ProjectItem {
   progress: number;
   createdAt?: string;
 }
+
+export type NotificationCategory = 'CRM' | 'HRMS' | 'PROJECTS' | 'ANALYTICS' | 'AI_AGENT';
+
+export interface CortexNotification {
+  id: string;
+  title: string;
+  message: string;
+  timestamp: string;
+  module: NotificationCategory;
+  targetTab: NavigationTab;
+  read: boolean;
+}
